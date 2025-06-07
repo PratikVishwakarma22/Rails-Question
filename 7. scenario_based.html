@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rails 4 to 7 Migration Guide</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #000;
+        background-color: #fff;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+      }
+      h1,
+      h2 {
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+      }
+      h2 {
+        margin-top: 30px;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      li {
+        margin-bottom: 8px;
+      }
+      code {
+        background-color: #eee;
+        padding: 2px 4px;
+        font-family: monospace;
+      }
+      .note {
+        border: 1px solid #000;
+        padding: 10px;
+        margin-top: 20px;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+    <h1>[1]. How to Migrate a Legacy Rails 4 App to Rails 7</h1>
+
+    <h2>1. Audit the Current Application</h2>
+    <ul>
+      <li>Check the <code>Gemfile</code> for deprecated or abandoned gems.</li>
+      <li>Look for custom monkey patches or deprecated Rails methods.</li>
+      <li>Ensure test coverage is sufficient before proceeding.</li>
+      <li>
+        Use tools like <code>bundler-audit</code> and <code>brakeman</code> for
+        security checks.
+      </li>
+    </ul>
+
+    <h2>2. Upgrade Rails Incrementally</h2>
+    <ul>
+      <li>
+        Recommended path:
+        <strong>Rails 4 → 5.0 → 5.1 → 5.2 → 6.0 → 6.1 → 7.0</strong>.
+      </li>
+      <li>Use <code>rails app:update</code> and resolve diffs at each step.</li>
+      <li>Run tests and fix deprecations between upgrades.</li>
+    </ul>
+
+    <h2>3. Update Ruby Version</h2>
+    <ul>
+      <li>Rails 7 needs Ruby 2.7+, ideally Ruby 3.1 or 3.2.</li>
+      <li>Update <code>.ruby-version</code> and test for compatibility.</li>
+    </ul>
+
+    <h2>4. Replace Removed Features and APIs</h2>
+    <ul>
+      <li><code>before_filter</code> → <code>before_action</code></li>
+      <li><code>render :text</code> → <code>render :plain</code></li>
+      <li>Use strong parameters instead of mass-assignment.</li>
+      <li>Update RSpec or Minitest syntax if needed.</li>
+    </ul>
+
+    <h2>5. Gem Compatibility</h2>
+    <ul>
+      <li>Replace abandoned gems (e.g., Paperclip → ActiveStorage).</li>
+      <li>Ensure all gems support Rails 7 via RubyGems or GitHub.</li>
+      <li>
+        Consider removing <code>turbolinks</code> and <code>sprockets</code>.
+      </li>
+    </ul>
+
+    <h2>6. Adopt Rails 7 Features (Optional)</h2>
+    <ul>
+      <li>Switch to the <strong>zeitwerk</strong> autoloader.</li>
+      <li>
+        Use <strong>Hotwire</strong> (Turbo + Stimulus) for modern
+        interactivity.
+      </li>
+      <li>
+        Use <strong>ActiveStorage</strong> for uploads and encrypted attributes
+        for secure data.
+      </li>
+    </ul>
+
+    <h2>7. Testing and CI Integration</h2>
+    <ul>
+      <li>Ensure test suite is passing after each version bump.</li>
+      <li>Set up CI/CD pipelines if not already configured.</li>
+    </ul>
+
+    <h2>8. Manual QA</h2>
+    <ul>
+      <li>Manually test critical flows and edge cases.</li>
+      <li>Test background jobs, cron tasks, and mailers.</li>
+      <li>Monitor logs for deprecation warnings and bugs.</li>
+    </ul>
+
+    <h2>9. Deploy in Staging Before Production</h2>
+    <ul>
+      <li>Use production-like data in a staging environment.</li>
+      <li>Test performance, encoding, and timezone behaviors.</li>
+      <li>Ensure observability tools are working (e.g., logs, metrics).</li>
+    </ul>
+
+    <div class="note">
+      💡 <strong>Bonus (Interview Tip):</strong><br />
+      "Migrating from Rails 4 to 7 isn’t just a version upgrade — it's a chance
+      to remove technical debt, adopt modern conventions like Hotwire and
+      Zeitwerk, and prepare the app for future scalability and maintainability."
+    </div>
+
+    <h1>[2]. What Would You Do If the Production Site Suddenly Crashes?</h1>
+
+    <h2>1. Stay Calm and Acknowledge the Outage</h2>
+    <ul>
+      <li>Immediately acknowledge the issue to the team or stakeholders.</li>
+      <li>
+        Inform users via a status page or a temporary maintenance banner (if
+        possible).
+      </li>
+    </ul>
+
+    <h2>2. Check Monitoring Tools</h2>
+    <ul>
+      <li>
+        Use tools like <code>New Relic</code>, <code>Datadog</code>, or
+        <code>Grafana</code> to check for error spikes or CPU/memory issues.
+      </li>
+      <li>
+        Inspect logs using tools like <code>Loggly</code>,
+        <code>ELK</code> stack, or even <code>journalctl</code> if hosted on a
+        VPS.
+      </li>
+    </ul>
+
+    <h2>3. Access the Server or Dashboard</h2>
+    <ul>
+      <li>Check the web server (e.g., NGINX, Puma, or Unicorn) status.</li>
+      <li>
+        Restart services if needed using <code>systemctl</code> or
+        <code>docker restart</code>.
+      </li>
+      <li>Verify that the database is up and responding.</li>
+    </ul>
+
+    <h2>4. Rollback If a Recent Deploy Caused It</h2>
+    <ul>
+      <li>
+        Use <code>cap production deploy:rollback</code> or equivalent Git-based
+        rollback procedure.
+      </li>
+      <li>Revert the changes that introduced the issue and redeploy.</li>
+    </ul>
+
+    <h2>5. Use Maintenance Mode If Needed</h2>
+    <ul>
+      <li>
+        Enable maintenance mode using <code>rails maintenance:start</code> (if
+        using gems like <code>maintenance_tasks</code>) or redirect traffic
+        temporarily.
+      </li>
+    </ul>
+
+    <h2>6. Investigate the Root Cause</h2>
+    <ul>
+      <li>Review production logs: <code>log/production.log</code>.</li>
+      <li>Check recent commits or environment variable changes.</li>
+      <li>Look for database or memory bottlenecks.</li>
+    </ul>
+
+    <h2>7. Document the Incident</h2>
+    <ul>
+      <li>
+        Prepare a post-mortem document with:
+        <ul>
+          <li>Timeline of events</li>
+          <li>Root cause</li>
+          <li>Resolution steps</li>
+          <li>Action items to prevent recurrence</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>8. Prevent Future Outages</h2>
+    <ul>
+      <li>Add more robust monitoring and alerting.</li>
+      <li>Set up health checks and auto-healing mechanisms.</li>
+      <li>Improve deployment pipelines with automated rollback support.</li>
+    </ul>
+
+    <div class="note">
+      💡 <strong>Bonus (Interview Tip):</strong><br />
+      "In crisis situations, staying calm, communicating early, and having a
+      solid rollback plan is just as important as fixing the issue technically.
+      I always focus on restoring service first, then investigating root causes
+      in detail."
+    </div>
+
+    <h1>[3]. Scaling a Rails App to Handle 10x Traffic</h1>
+
+    <h2>1. Application Performance Profiling</h2>
+    <ul>
+      <li>
+        Use tools like <code>New Relic</code>, <code>Scout</code>, or
+        <code>Rack Mini Profiler</code>.
+      </li>
+      <li>Find slow SQL queries, N+1 queries, and memory leaks.</li>
+      <li>Identify high-latency controllers and actions.</li>
+    </ul>
+
+    <h2>2. Database Optimization</h2>
+    <ul>
+      <li>
+        Add missing indexes on foreign keys and frequently queried fields.
+      </li>
+      <li>
+        Optimize large queries using <code>includes</code>, <code>pluck</code>,
+        or pagination.
+      </li>
+      <li>Consider read replicas or caching frequently accessed records.</li>
+    </ul>
+
+    <h2>3. Caching Strategy</h2>
+    <ul>
+      <li>
+        Use fragment caching, Russian doll caching, and low-level Rails cache
+        API.
+      </li>
+      <li>
+        Cache common queries, expensive view components, or home/feed pages.
+      </li>
+      <li>Use <code>Redis</code> or <code>Memcached</code> for fast access.</li>
+    </ul>
+
+    <h2>4. Background Jobs</h2>
+    <ul>
+      <li>
+        Offload non-critical tasks (emails, file uploads, APIs) to background
+        jobs.
+      </li>
+      <li>
+        Use tools like <code>Sidekiq</code>, <code>DelayedJob</code>, or
+        <code>Resque</code>.
+      </li>
+      <li>Scale worker queues separately from web servers.</li>
+    </ul>
+
+    <h2>5. Web Server & App Server Scaling</h2>
+    <ul>
+      <li>Use multiple Puma workers/threads.</li>
+      <li>Horizontal scaling: Add more web dynos/instances.</li>
+      <li>
+        Use a load balancer (e.g., AWS ALB, HAProxy, or NGINX) to distribute
+        traffic.
+      </li>
+    </ul>
+
+    <h2>6. Frontend Optimizations</h2>
+    <ul>
+      <li>Minify JS/CSS, use CDN for static assets.</li>
+      <li>Use lazy loading for images and async scripts.</li>
+      <li>Preload important assets and cache browser-side aggressively.</li>
+    </ul>
+
+    <h2>7. Use CDN and Edge Caching</h2>
+    <ul>
+      <li>
+        Leverage services like <code>Cloudflare</code>, <code>Akamai</code>, or
+        <code>Fastly</code>.
+      </li>
+      <li>Edge cache HTML for public pages to reduce backend load.</li>
+    </ul>
+
+    <h2>8. Infrastructure & Autoscaling</h2>
+    <ul>
+      <li>
+        Use auto-scaling groups or Kubernetes HPA (Horizontal Pod Autoscaler).
+      </li>
+      <li>
+        Monitor resource usage (CPU, memory, DB connections) and scale
+        accordingly.
+      </li>
+    </ul>
+
+    <h2>9. Load Testing</h2>
+    <ul>
+      <li>
+        Simulate traffic using tools like <code>k6</code>, <code>Locust</code>,
+        or <code>JMeter</code>.
+      </li>
+      <li>
+        Test end-to-end performance and find bottlenecks before they hit
+        production.
+      </li>
+    </ul>
+
+    <h2>10. Monitoring and Alerts</h2>
+    <ul>
+      <li>
+        Set up monitoring for app response time, DB latency, memory usage.
+      </li>
+      <li>
+        Use <code>Prometheus</code>, <code>Grafana</code>, <code>Datadog</code>,
+        or similar tools.
+      </li>
+      <li>Configure alerts for error spikes, timeouts, or queue backlogs.</li>
+    </ul>
+
+    <div class="note">
+      💡 <strong>Bonus (Interview Tip):</strong><br />
+      "Scaling is not just about hardware—it's about writing efficient code,
+      understanding system behavior under load, and preparing both app and infra
+      for dynamic traffic. I always prepare by profiling first, then optimizing
+      bottlenecks layer by layer."
+    </div>
+
+    <h1>[4]. How Would You Handle Multi-Tenant Architecture in Rails?</h1>
+
+    <h2>What is Multi-Tenant Architecture?</h2>
+    <p>
+      Multi-tenancy means a single app serves multiple clients (tenants) with
+      data isolation. Each tenant's data is secure and separate.
+    </p>
+
+    <table>
+      <tr>
+        <th>Strategy</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>Shared DB, Scoped Data</td>
+        <td>
+          All tenants share one DB, but records include a
+          <code>tenant_id</code>. Most common.
+        </td>
+      </tr>
+      <tr>
+        <td>Separate Schemas</td>
+        <td>
+          Each tenant has their own schema in the same database.
+          PostgreSQL-specific.
+        </td>
+      </tr>
+      <tr>
+        <td>Separate Databases</td>
+        <td>
+          Each tenant gets a full database. Offers isolation, but complex setup.
+        </td>
+      </tr>
+    </table>
+
+    <h2>How to Implement in Rails (Shared DB Example)</h2>
+
+    <ul>
+      <li>Add a <code>tenant_id</code> column to tenant-owned tables.</li>
+      <li>
+        Create a <code>current_tenant</code> helper (via subdomain or user
+        association).
+      </li>
+      <li>
+        Scope all queries using <code>default_scope</code> or a gem like
+        <code>ActsAsTenant</code>.
+      </li>
+      <li>
+        Use PostgreSQL Row-Level Security for stronger isolation (optional).
+      </li>
+    </ul>
+
+    <h2>Using Subdomains for Tenant Routing</h2>
+    <ul>
+      <li>
+        Set up <code>constraints</code> in <code>routes.rb</code> to handle
+        subdomains.
+      </li>
+      <li>Find tenant by subdomain in <code>ApplicationController</code>.</li>
+    </ul>
+
+    <h2>Popular Gems</h2>
+    <ul>
+      <li><code>apartment</code> – Schema-based multi-tenancy</li>
+      <li>
+        <code>acts_as_tenant</code> – Simple shared-database tenant scoping
+      </li>
+      <li><code>milia</code> – Devise + multi-tenancy boilerplate</li>
+    </ul>
+
+    <h2>Security Considerations</h2>
+    <ul>
+      <li>
+        Always scope user data with <code>tenant_id</code> to prevent leaks.
+      </li>
+      <li>
+        Add uniqueness validations on <code>[tenant_id, resource_id]</code>.
+      </li>
+    </ul>
+
+    <div class="note">
+      💡 <strong>Bonus (Interview Tip):</strong><br />
+      "I prefer shared-database multi-tenancy using
+      <code>acts_as_tenant</code> for simplicity and scalability. For enterprise
+      isolation, schema-based or database-per-tenant may be better — depending
+      on business needs."
+    </div>
+
+    <h1>[5]. How Do You Design an Audit Logging System in Rails?</h1>
+
+    <h2>What is Audit Logging?</h2>
+    <p>
+      Audit logs record who did what and when. Example: "User 5 updated Invoice
+      #42 at 3 PM."
+    </p>
+
+    <h2>Use Case Examples:</h2>
+    <ul>
+      <li>Track changes to sensitive data</li>
+      <li>Compliance and audit trails</li>
+      <li>Security review and debugging</li>
+    </ul>
+
+    <h2>Option 1: Use the <code>paper_trail</code> Gem</h2>
+    <pre><code>gem 'paper_trail'</code></pre>
+    <pre><code>rails generate paper_trail:install
+  rails db:migrate</code></pre>
+    <pre><code>class Invoice &lt; ApplicationRecord
+    has_paper_trail
+  end</code></pre>
+
+    <h2>Option 2: Manual Logging Table</h2>
+    <pre><code>rails generate model AuditLog user_id:integer action:string record_type:string record_id:integer changes:json ip_address:string
+  rails db:migrate</code></pre>
+
+    <h3>Log an action manually:</h3>
+    <pre><code>AuditLog.create!(
+    user_id: current_user.id,
+    action: "update",
+    record_type: "Invoice",
+    record_id: @invoice.id,
+    changes: @invoice.previous_changes,
+    ip_address: request.remote_ip
+  )</code></pre>
+
+    <h2>Set User Info for <code>paper_trail</code></h2>
+    <pre><code>class ApplicationController &lt; ActionController::Base
+    before_action :set_paper_trail_whodunnit
+  end</code></pre>
+
+    <pre><code>def user_for_paper_trail
+    current_user.id
+  end</code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+      <li>Log user ID, action, timestamp, record type</li>
+      <li>Use JSON column to store changes</li>
+      <li>Avoid logging secrets</li>
+      <li>Paginate and index logs</li>
+    </ul>
+
+    <div class="note">
+      💡 <strong>Interview Tip:</strong><br />
+      "I prefer using <code>paper_trail</code> for fast auditing needs, but for
+      complex logs (e.g., IP tracking, cross-model actions), I implement a
+      custom <code>AuditLog</code> model for full control."
+    </div>
+
+    <h1>[6]. How Do You Implement Soft Deletes in Rails?</h1>
+
+    <h2>What is a Soft Delete?</h2>
+    <p>
+      Soft deleting means not permanently removing a record. Instead, it’s
+      marked as deleted (e.g. with a <code>deleted_at</code> column).
+    </p>
+
+    <h2>Option 1: Using the <code>paranoia</code> Gem</h2>
+    <pre><code>gem 'paranoia', '~> 2.6'</code></pre>
+    <pre><code>rails generate migration AddDeletedAtToUsers deleted_at:datetime:index
+  rails db:migrate</code></pre>
+
+    <pre><code>class User &lt; ApplicationRecord
+    acts_as_paranoid
+  end</code></pre>
+
+    <ul>
+      <li><code>user.destroy</code> → sets <code>deleted_at</code></li>
+      <li><code>User.all</code> → hides deleted</li>
+      <li><code>User.with_deleted</code> → includes all</li>
+      <li><code>user.really_destroy!</code> → hard delete</li>
+    </ul>
+
+    <h2>Option 2: Custom Soft Delete Logic</h2>
+
+    <pre><code>rails generate migration AddDeletedAtToProducts deleted_at:datetime:index
+  rails db:migrate</code></pre>
+
+    <pre><code>class Product &lt; ApplicationRecord
+    scope :active, -&gt; { where(deleted_at: nil) }
+  
+    def soft_delete
+      update(deleted_at: Time.current)
+    end
+  
+    def restore
+      update(deleted_at: nil)
+    end
+  
+    def deleted?
+      deleted_at.present?
+    end
+  end</code></pre>
+
+    <h2>Comparison Table</h2>
+    <table>
+      <tr>
+        <th>Feature</th>
+        <th>paranoia Gem</th>
+        <th>Custom Logic</th>
+      </tr>
+      <tr>
+        <td>Setup Time</td>
+        <td>✅ Fast</td>
+        <td>❌ More work</td>
+      </tr>
+      <tr>
+        <td>Hidden from <code>Model.all</code></td>
+        <td>✅ Yes</td>
+        <td>❌ No (need custom scope)</td>
+      </tr>
+      <tr>
+        <td>Restore Support</td>
+        <td>✅ Built-in</td>
+        <td>✅ If implemented</td>
+      </tr>
+      <tr>
+        <td>Flexibility</td>
+        <td>❌ Less</td>
+        <td>✅ More control</td>
+      </tr>
+      <tr>
+        <td>Dependencies</td>
+        <td>❌ Adds gem</td>
+        <td>✅ None</td>
+      </tr>
+    </table>
+
+    <div class="note">
+      💡 <strong>Interview Tip:</strong> “I use <code>paranoia</code> for fast
+      delivery, but for fine-grained control and clean querying, I build custom
+      soft delete logic.”
+    </div>
+
+    <h1>[7]. Designing an Internal Notification System with Slack in Rails</h1>
+
+    <h2>1. Create a Notification Model</h2>
+    <pre><code>rails generate model Notification user:references notifiable:references{polymorphic} message:string read_at:datetime notify_type:string
+  rails db:migrate
+  </code></pre>
+
+    <h3>Notification Model Fields</h3>
+    <table>
+      <tr>
+        <th>Field</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td>user_id</td>
+        <td>Recipient of the notification</td>
+      </tr>
+      <tr>
+        <td>notifiable</td>
+        <td>Polymorphic association (e.g., Task, Comment)</td>
+      </tr>
+      <tr>
+        <td>message</td>
+        <td>Notification text shown to user</td>
+      </tr>
+      <tr>
+        <td>read_at</td>
+        <td>Timestamp when notification was read</td>
+      </tr>
+      <tr>
+        <td>notify_type</td>
+        <td>Type of notification: 'in_app', 'email', 'slack', or 'all'</td>
+      </tr>
+    </table>
+
+    <h2>2. Trigger Notifications in Your Models</h2>
+    <pre><code>def notify_users
+    Notification.create!(
+      user: task.owner,
+      notifiable: self,
+      message: "#{user.name} commented on your task",
+      notify_type: 'all'  # can be 'in_app', 'email', 'slack', or 'all'
+    )
+  
+    # Send email notification
+    NotificationMailer.alert_email(task.owner, self).deliver_later
+  
+    # Send Slack notification
+    SlackNotifier.notify("#{user.name} commented on Task ##{task.id}")
+  end
+  </code></pre>
+
+    <h2>3. Email Notifications</h2>
+    <pre><code>class NotificationMailer &lt; ApplicationMailer
+    def alert_email(user, notifiable)
+      @user = user
+      @notifiable = notifiable
+      mail(to: @user.email, subject: "You have a new notification")
+    end
+  end
+  </code></pre>
+
+    <h2>4. Display In-App Notifications (View Example)</h2>
+    <pre><code>&lt;% current_user.notifications.order(created_at: :desc).limit(10).each do |n| %&gt;
+    &lt;div class="&lt;%= 'unread' unless n.read_at %&gt;"&gt;
+      &lt;%= n.message %&gt;
+      &lt;%= time_ago_in_words(n.created_at) %&gt; ago
+      &lt;%= link_to 'Mark as read', mark_as_read_notification_path(n), method: :patch %&gt;
+    &lt;/div&gt;
+  &lt;% end %&gt;
+  </code></pre>
+
+    <h2>5. Mark Notification as Read (Controller and Routes)</h2>
+    <pre><code># config/routes.rb
+  resources :notifications do
+    patch :mark_as_read, on: :member
+  end
+  
+  # app/controllers/notifications_controller.rb
+  def mark_as_read
+    @notification = current_user.notifications.find(params[:id])
+    @notification.update(read_at: Time.current)
+    redirect_back fallback_location: root_path
+  end
+  </code></pre>
+
+    <h2>6. Integrate Slack Notifications</h2>
+
+    <h3>6.1 Create Slack Webhook URL</h3>
+    <ol>
+      <li>
+        Go to
+        <a href="https://api.slack.com/apps" target="_blank"
+          >https://api.slack.com/apps</a
+        >
+      </li>
+      <li>Create a new app and add <strong>Incoming Webhooks</strong></li>
+      <li>Enable Incoming Webhooks and add webhook URL to a channel</li>
+      <li>
+        Copy the Webhook URL (starts with
+        <code>https://hooks.slack.com/services/...</code>)
+      </li>
+    </ol>
+
+    <h3>6.2 Add HTTParty Gem</h3>
+    <pre><code>gem 'httparty'</code></pre>
+    <p>Run:</p>
+    <pre><code>bundle install</code></pre>
+
+    <h3>6.3 Create SlackNotifier Service</h3>
+    <pre><code># app/services/slack_notifier.rb
+  class SlackNotifier
+    include HTTParty
+    base_uri 'https://hooks.slack.com'
+  
+    def self.notify(message)
+      webhook_url = Rails.application.credentials.slack[:webhook_url]
+      return unless webhook_url.present?
+  
+      payload = {
+        text: message,
+        username: 'RailsBot',
+        icon_emoji: ':bell:'
+      }
+  
+      HTTParty.post(webhook_url, body: payload.to_json, headers: { 'Content-Type' =&gt; 'application/json' })
+    end
+  end
+  </code></pre>
+
+    <h3>6.4 Store Webhook URL Securely in Credentials</h3>
+    <pre><code>EDITOR="nano" bin/rails credentials:edit
+  
+  # Add inside:
+  slack:
+    webhook_url: https://hooks.slack.com/services/...
+  </code></pre>
+
+    <h3>6.5 Use SlackNotifier in Your Notification Flow</h3>
+    <pre><code>SlackNotifier.notify("#{user.name} commented on Task ##{task.id}")</code></pre>
+
+    <h2>7. Optional: Customize by Notification Type</h2>
+    <pre><code>case notification.notify_type
+  when 'slack'
+    SlackNotifier.notify(notification.message)
+  when 'email'
+    NotificationMailer.alert_email(user, notification.notifiable).deliver_later
+  when 'in_app'
+    # Already saved for UI display
+  when 'all'
+    SlackNotifier.notify(notification.message)
+    NotificationMailer.alert_email(user, notification.notifiable).deliver_later
+  end
+  </code></pre>
+
+    <div class="note">
+      <strong>Note:</strong> Use Slack message formatting to improve
+      readability, e.g.:
+      <pre><code>SlackNotifier.notify("*#{user.name}* updated &lt;https://myapp.com/tasks/#{task.id}|Task ##{task.id}&gt;")</code></pre>
+    </div>
+
+    <h1>How to Implement Feature Toggles in a Rails App</h1>
+
+    <h2>What Are Feature Toggles?</h2>
+    <p>
+      Feature toggles (feature flags) allow you to enable or disable features in
+      your app without deploying new code. This helps with gradual rollouts, A/B
+      testing, and quick disabling of problematic features.
+    </p>
+
+    <h2>Approach 1: Use a Feature Toggle Gem</h2>
+    <p>
+      Popular gems like <code>flipper</code> or <code>rollout</code> provide
+      ready-to-use feature toggle management.
+    </p>
+
+    <h3>Example with <code>flipper</code> Gem</h3>
+
+    <pre><code># Add to Gemfile
+  gem 'flipper'
+  gem 'flipper-ui' # Optional: provides web UI to manage toggles
+  </code></pre>
+
+    <pre><code># Run bundle install
+  bundle install
+  
+  # Set up initializer config/initializers/flipper.rb
+  require 'flipper'
+  
+  Flipper.configure do |config|
+    config.default do
+      adapter = Flipper::Adapters::ActiveRecord.new
+      Flipper.new(adapter)
+    end
+  end
+  </code></pre>
+
+    <p>You also need to generate and run migration for flipper tables:</p>
+    <pre><code>rails generate flipper:active_record
+  rails db:migrate
+  </code></pre>
+
+    <h3>Usage in Code</h3>
+    <pre><code>if Flipper.enabled?(:new_checkout)
+    # show new checkout page
+  else
+    # show old checkout page
+  end
+  </code></pre>
+
+    <h3>Managing Features</h3>
+    <p>Mount the UI (optional) to manage toggles:</p>
+    <pre><code>mount Flipper::UI.app(Flipper) => '/flipper'</code></pre>
+
+    <h2>Approach 2: Custom Feature Toggle Logic</h2>
+    <p>
+      For simple toggles, you can store feature flags in the database or
+      environment variables.
+    </p>
+
+    <h3>Example: Using Environment Variables</h3>
+    <pre><code>if ENV['FEATURE_NEW_CHECKOUT'] == 'true'
+    # Enable new checkout
+  else
+    # Disable new checkout
+  end
+  </code></pre>
+
+    <h3>Example: Database-backed Feature Flags</h3>
+    <pre><code>class FeatureFlag &lt; ApplicationRecord
+    validates :name, presence: true, uniqueness: true
+    # attributes: name:string, enabled:boolean
+  end
+  
+  # Usage
+  if FeatureFlag.find_by(name: 'new_checkout')&.enabled?
+    # New checkout flow
+  else
+    # Old flow
+  end
+  </code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+      <li>Keep toggles short-lived; clean them up after feature is stable.</li>
+      <li>Use consistent naming conventions.</li>
+      <li>
+        Test toggled features thoroughly on both enabled and disabled states.
+      </li>
+      <li>Consider user or group targeting (some gems support this).</li>
+    </ul>
+
+    <div class="note">
+      <strong>Note:</strong> Using a mature gem like <code>flipper</code> saves
+      time and provides advanced features like targeting, percentage rollouts,
+      and a web UI.
+    </div>
+
+    <h1>[8]. How to Implement Feature Toggles in a Rails App</h1>
+
+    <h2>What Are Feature Toggles?</h2>
+    <p>
+      Feature toggles (feature flags) allow you to enable or disable features in
+      your app without deploying new code. This helps with gradual rollouts, A/B
+      testing, and quick disabling of problematic features.
+    </p>
+
+    <h2>Approach 1: Use a Feature Toggle Gem</h2>
+    <p>
+      Popular gems like <code>flipper</code> or <code>rollout</code> provide
+      ready-to-use feature toggle management.
+    </p>
+
+    <h3>Example with <code>flipper</code> Gem</h3>
+
+    <pre><code># Add to Gemfile
+  gem 'flipper'
+  gem 'flipper-ui' # Optional: provides web UI to manage toggles
+  </code></pre>
+
+    <pre><code># Run bundle install
+  bundle install
+  
+  # Set up initializer config/initializers/flipper.rb
+  require 'flipper'
+  
+  Flipper.configure do |config|
+    config.default do
+      adapter = Flipper::Adapters::ActiveRecord.new
+      Flipper.new(adapter)
+    end
+  end
+  </code></pre>
+
+    <p>You also need to generate and run migration for flipper tables:</p>
+    <pre><code>rails generate flipper:active_record
+  rails db:migrate
+  </code></pre>
+
+    <h3>Usage in Code</h3>
+    <pre><code>if Flipper.enabled?(:new_checkout)
+    # show new checkout page
+  else
+    # show old checkout page
+  end
+  </code></pre>
+
+    <h3>Managing Features</h3>
+    <p>Mount the UI (optional) to manage toggles:</p>
+    <pre><code>mount Flipper::UI.app(Flipper) => '/flipper'</code></pre>
+
+    <h2>Approach 2: Custom Feature Toggle Logic</h2>
+    <p>
+      For simple toggles, you can store feature flags in the database or
+      environment variables.
+    </p>
+
+    <h3>Example: Using Environment Variables</h3>
+    <pre><code>if ENV['FEATURE_NEW_CHECKOUT'] == 'true'
+    # Enable new checkout
+  else
+    # Disable new checkout
+  end
+  </code></pre>
+
+    <h3>Example: Database-backed Feature Flags</h3>
+    <pre><code>class FeatureFlag &lt; ApplicationRecord
+    validates :name, presence: true, uniqueness: true
+    # attributes: name:string, enabled:boolean
+  end
+  
+  # Usage
+  if FeatureFlag.find_by(name: 'new_checkout')&.enabled?
+    # New checkout flow
+  else
+    # Old flow
+  end
+  </code></pre>
+
+    <h2>Best Practices</h2>
+    <ul>
+      <li>Keep toggles short-lived; clean them up after feature is stable.</li>
+      <li>Use consistent naming conventions.</li>
+      <li>
+        Test toggled features thoroughly on both enabled and disabled states.
+      </li>
+      <li>Consider user or group targeting (some gems support this).</li>
+    </ul>
+
+    <div class="note">
+      <strong>Note:</strong> Using a mature gem like <code>flipper</code> saves
+      time and provides advanced features like targeting, percentage rollouts,
+      and a web UI.
+    </div>
+
+    <h1>[9]. How to Manage Conflicts and Ensure Quality Before Deployment</h1>
+
+    <h2>Managing Conflicts</h2>
+    <ul>
+      <li>
+        <strong>Use Version Control System (Git):</strong> Enforce branching
+        strategies like Git Flow or trunk-based development.
+      </li>
+      <li>
+        <strong>Frequent Pulls and Small PRs:</strong> Encourage developers to
+        pull latest changes regularly and submit small, focused pull requests to
+        reduce conflicts.
+      </li>
+      <li>
+        <strong>Code Reviews:</strong> Require peer reviews for every pull
+        request to catch issues early and discuss code changes.
+      </li>
+      <li>
+        <strong>Resolve Conflicts Early:</strong> Developers should resolve
+        merge conflicts locally before pushing to avoid breaking the main
+        branch.
+      </li>
+    </ul>
+
+    <h2>Ensuring Quality</h2>
+    <ul>
+      <li>
+        <strong>Automated Testing:</strong> Maintain comprehensive test suites
+        (unit, integration, system tests) that run on every commit.
+      </li>
+      <li>
+        <strong>Continuous Integration (CI):</strong> Use CI pipelines (GitHub
+        Actions, Jenkins, CircleCI) to automatically build, test, and report
+        status on pull requests.
+      </li>
+      <li>
+        <strong>Code Quality Tools:</strong> Use linters (RuboCop), static
+        analysis, and style checkers to enforce code standards.
+      </li>
+      <li>
+        <strong>Pre-merge Checks:</strong> Require all tests to pass and code
+        review approvals before merging.
+      </li>
+      <li>
+        <strong>Staging Environment:</strong> Deploy merged changes to staging
+        for manual testing and validation before production release.
+      </li>
+    </ul>
+
+    <h2>Additional Practices</h2>
+    <ul>
+      <li>
+        <strong>Pair Programming:</strong> Optional practice to reduce errors
+        and share knowledge.
+      </li>
+      <li>
+        <strong>Feature Branches & Feature Toggles:</strong> Develop features
+        isolated to branches or toggle them off in production to minimize risk.
+      </li>
+      <li>
+        <strong>Documentation:</strong> Keep clear documentation for processes,
+        coding standards, and deployment steps.
+      </li>
+    </ul>
+
+    <h1>[10]. Interview Question: Challenges Faced and How I Resolved Them</h1>
+
+    <p>
+      <strong>Common Challenge:</strong> Managing complex legacy code while
+      adding new features without breaking existing functionality.
+    </p>
+
+    <p><strong>How I Resolved It:</strong></p>
+    <ul>
+      <li>
+        Gradually refactored the legacy codebase using automated tests to ensure
+        safety.
+      </li>
+      <li>
+        Introduced comprehensive test coverage (unit and integration tests)
+        before making significant changes.
+      </li>
+      <li>
+        Improved documentation and code comments to help the team understand the
+        legacy system better.
+      </li>
+      <li>
+        Collaborated closely with teammates through code reviews and pair
+        programming to maintain code quality.
+      </li>
+    </ul>
+
+    <p>
+      <strong>Other Example:</strong> Handling tight deadlines with limited
+      resources by prioritizing tasks effectively, communicating transparently
+      with stakeholders, and automating repetitive tasks.
+    </p>
+  </body>
+</html>

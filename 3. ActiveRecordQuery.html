@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ActiveRecord Query Methods Explained</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        background: #f9f9f9;
+        color: #333;
+      }
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0 2rem;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5rem 1rem;
+        text-align: left;
+      }
+      th {
+        background: #34495e;
+        color: white;
+      }
+      code {
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.95em;
+      }
+      pre {
+        background: #eee;
+        padding: 1rem;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .note {
+        background: #eaf2f8;
+        border-left: 4px solid #2980b9;
+        padding: 0.5rem 1rem;
+        margin: 1rem 0;
+        font-style: italic;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+    <h1>ActiveRecord Query Methods Explained</h1>
+
+    <section>
+      <h2>
+        1. Difference between <code>.where</code>, <code>.find</code>,
+        <code>.find_by</code>, and <code>.find_by!</code>
+      </h2>
+
+      <p>
+        These ActiveRecord methods help you retrieve data from the database in
+        different ways:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Return Type</th>
+            <th>Raises Error if None Found?</th>
+            <th>Usage Example</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>.where</code></td>
+            <td>ActiveRecord::Relation</td>
+            <td>No</td>
+            <td><code>User.where(active: true)</code></td>
+            <td>Returns all records matching conditions or empty relation</td>
+          </tr>
+          <tr>
+            <td><code>.find</code></td>
+            <td>Single Record</td>
+            <td>Yes</td>
+            <td><code>User.find(1)</code></td>
+            <td>Finds by primary key (id) only</td>
+          </tr>
+          <tr>
+            <td><code>.find_by</code></td>
+            <td>Single Record or <code>nil</code></td>
+            <td>No</td>
+            <td><code>User.find_by(email: 'a@b.com')</code></td>
+            <td>Returns first matching record or nil</td>
+          </tr>
+          <tr>
+            <td><code>.find_by!</code></td>
+            <td>Single Record</td>
+            <td>Yes</td>
+            <td><code>User.find_by!(email: 'a@b.com')</code></td>
+            <td>
+              Raises <code>ActiveRecord::RecordNotFound</code> if none found
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Example in Rails console:</h3>
+      <pre><code>User.where(active: true)
+# => #&lt;ActiveRecord::Relation [user1, user2, ...]&gt;
+
+User.find(1)
+# => #&lt;User id=1 ...&gt; or raises if not found
+
+User.find_by(email: 'x@y.com')
+# => #&lt;User ...&gt; or nil if none
+
+User.find_by!(email: 'x@y.com')
+# => #&lt;User ...&gt; or raises if none
+</code></pre>
+
+      <div class="note">
+        <strong>Interview Tip:</strong> Always mention the differences in return
+        types and error handling when asked. This shows a clear understanding of
+        how these methods behave in various scenarios.
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Fetch users with &gt; 5 orders in the last month</h2>
+      <p>
+        <strong>Goal:</strong> Find users with more than 5 orders placed in the
+        last month.
+      </p>
+
+      <p><strong>Key Steps:</strong></p>
+      <ul>
+        <li>
+          Define last month range using <code>1.month.ago..Time.current</code>
+        </li>
+        <li>Join users with orders (<code>.joins(:orders)</code>)</li>
+        <li>Filter orders by <code>created_at</code> within last month</li>
+        <li>
+          Group by user and use
+          <code>having('COUNT(orders.id) &gt; ?', 5)</code>
+        </li>
+      </ul>
+
+      <pre><code>User
+        .joins(:orders)
+        .where(orders: { created_at: 1.month.ago..Time.current })
+        .group('users.id')
+        .having('COUNT(orders.id) &gt; ?', 5)
+      </code></pre>
+
+      <p>
+        <em>Returns all users who placed more than 5 orders in last month.</em>
+      </p>
+    </section>
+
+    <section>
+      <h2>3. ActiveRecord: Eager Loading vs Includes vs Joins</h2>
+
+      <h3>1. What is Eager Loading?</h3>
+      <p>
+        Eager loading is a technique in Rails to load associated records in
+        advance to avoid the <strong>N+1 query problem</strong>.
+      </p>
+
+      <h4>🚫 N+1 Problem Example:</h4>
+      <pre><code>users = User.all
+      users.each do |user|
+        puts user.orders.count  # N queries for orders
+      end</code></pre>
+
+      <h3>2. Solutions to N+1 Problem</h3>
+
+      <h4>a. Using <code>.includes</code></h4>
+      <p>
+        Tells Rails to load associations to prevent N+1. Uses separate queries
+        by default.
+      </p>
+      <pre><code>users = User.includes(:orders)</code></pre>
+
+      <h4>b. Using <code>.eager_load</code></h4>
+      <p>
+        Forces a LEFT OUTER JOIN. Useful when filtering or sorting on the
+        associated table.
+      </p>
+      <pre><code>users = User.eager_load(:orders)
+                 .where('orders.status = ?', 'completed')</code></pre>
+
+      <h4>c. Using <code>.preload</code></h4>
+      <p>Forces two separate queries even if filtering is applied.</p>
+      <pre><code>users = User.preload(:orders)</code></pre>
+
+      <h3>3. Difference Table</h3>
+      <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Loads Association?</th>
+            <th>Query Type</th>
+            <th>Use Case</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>.includes</code></td>
+            <td>Yes</td>
+            <td>Separate queries or JOIN (auto)</td>
+            <td>Avoid N+1 when not filtering on assoc</td>
+          </tr>
+          <tr>
+            <td><code>.eager_load</code></td>
+            <td>Yes</td>
+            <td>Always LEFT OUTER JOIN</td>
+            <td>When filtering/sorting on associated table</td>
+          </tr>
+          <tr>
+            <td><code>.joins</code></td>
+            <td>No</td>
+            <td>INNER JOIN</td>
+            <td>When filtering by assoc but not loading them</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>4. Using <code>.includes</code> with <code>.references</code></h3>
+      <p>
+        If you apply conditions on an included table, Rails needs a JOIN to
+        filter properly.
+      </p>
+      <pre><code># Without references (may raise error)
+      User.includes(:orders).where('orders.status = ?', 'completed')
+      
+      # Correct usage with references
+      User.includes(:orders)
+          .where('orders.status = ?', 'completed')
+          .references(:orders)</code></pre>
+
+      <h3>5. Practical Code Examples</h3>
+
+      <h4>✅ Avoid N+1 (no filtering)</h4>
+      <pre><code>users = User.includes(:orders)</code></pre>
+
+      <h4>✅ Eager load + Filter</h4>
+      <pre><code>users = User.eager_load(:orders)
+                   .where('orders.status = ?', 'completed')</code></pre>
+
+      <h4>✅ Includes + References</h4>
+      <pre><code>users = User.includes(:orders)
+                   .where('orders.status = ?', 'completed')
+                   .references(:orders)</code></pre>
+
+      <h4>✅ Only filtering, no loading</h4>
+      <pre><code>users = User.joins(:orders)
+                   .where(orders: { status: 'completed' })</code></pre>
+
+      <h3>6. Summary: When to Use What?</h3>
+      <ul>
+        <li>Use <code>.includes</code> to avoid N+1 queries.</li>
+        <li>
+          Use <code>.eager_load</code> when you need JOIN with
+          filtering/sorting.
+        </li>
+        <li>Use <code>.preload</code> to always perform separate queries.</li>
+        <li>
+          Use <code>.joins</code> when filtering on associations but don’t need
+          to load them.
+        </li>
+        <li>
+          Use <code>.references</code> with <code>.includes</code> when
+          filtering on associations.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. What is a Scope in Rails?</h2>
+
+      <p>
+        <strong>Scope</strong> is a way to define reusable and chainable queries
+        in a Rails model.
+      </p>
+
+      <h3>✅ Basic Syntax</h3>
+      <pre><code>class User &lt; ApplicationRecord
+        scope :active, -&gt; { where(active: true) }
+      end</code></pre>
+
+      <p>Usage:</p>
+      <pre><code>User.active</code></pre>
+
+      <h3>🌍 Real-World Example</h3>
+      <pre><code>class Order &lt; ApplicationRecord
+        scope :completed, -&gt; { where(status: 'completed') }
+        scope :recent, -&gt; { where('created_at &gt;= ?', 1.week.ago) }
+      end
+      
+      Order.completed.recent</code></pre>
+
+      <h3>🧠 Benefits</h3>
+      <ul>
+        <li>Cleaner and more readable queries</li>
+        <li>Reusable across the app</li>
+        <li>Chainable like ActiveRecord methods</li>
+      </ul>
+
+      <h3>⚡ Scopes with Parameters</h3>
+      <pre><code>scope :by_status, -&gt;(status) { where(status: status) }
+      
+      Order.by_status('pending')</code></pre>
+
+      <h3>🚫 Avoid</h3>
+      <ul>
+        <li>Don’t add heavy logic in scopes</li>
+        <li>
+          Don’t use reserved names like <code>new</code>, <code>first</code>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5. How to Run Raw SQL in ActiveRecord</h2>
+
+      <h3>1. Using <code>find_by_sql</code></h3>
+      <pre><code>User.find_by_sql("SELECT * FROM users WHERE active = true")</code></pre>
+
+      <h3>2. Using <code>connection.execute</code></h3>
+      <pre><code>ActiveRecord::Base.connection.execute("SELECT COUNT(*) FROM users")</code></pre>
+
+      <h3>3. SQL in Pluck or Select</h3>
+      <pre><code>User.pluck("DATE(created_at)")
+      User.select("users.*, COUNT(orders.id) AS orders_count")
+           .joins(:orders)
+           .group("users.id")</code></pre>
+
+      <h3>4. Safe SQL with Placeholders</h3>
+      <pre><code>User.find_by_sql(["SELECT * FROM users WHERE email = ?", "test@example.com"])</code></pre>
+
+      <h3>5. Sanitizing Manually</h3>
+      <pre><code>email = "test@example.com"
+      sql = ActiveRecord::Base.send(:sanitize_sql_array, ["SELECT * FROM users WHERE email = ?", email])
+      User.find_by_sql(sql)</code></pre>
+
+      <h3>🚫 Avoid Interpolation</h3>
+      <pre><code># ❌ Dangerous:
+      User.find_by_sql("SELECT * FROM users WHERE email = '#{params[:email]}'")</code></pre>
+
+      <h3>🧠 Interview Tip</h3>
+      <p>
+        Always use placeholders or sanitization to avoid SQL injection when
+        writing raw SQL in Rails.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Pluck vs Select in ActiveRecord</h2>
+
+      <h3>🔹 <code>pluck</code> – Fetch Raw Values</h3>
+      <p>Use when you only need specific column values (no model objects).</p>
+      <pre><code>User.pluck(:email)
+      # =&gt; ["a@example.com", "b@example.com"]</code></pre>
+
+      <ul>
+        <li>✅ High performance</li>
+        <li>❌ Returns plain Ruby values (not ActiveRecord models)</li>
+      </ul>
+
+      <h3>🔹 <code>select</code> – Fetch Partial Model Objects</h3>
+      <p>Use when you want model instances with limited fields.</p>
+      <pre><code>User.select(:id, :email)
+      # =&gt; [#&lt;User id: 1, email: "a@example.com"&gt;, ...]</code></pre>
+
+      <ul>
+        <li>✅ Returns ActiveRecord objects</li>
+        <li>❌ Unselected attributes will be <code>nil</code></li>
+      </ul>
+
+      <h3>🆚 Comparison</h3>
+      <table>
+        <tr>
+          <th>Feature</th>
+          <th><code>pluck</code></th>
+          <th><code>select</code></th>
+        </tr>
+        <tr>
+          <td>Return Type</td>
+          <td>Raw values (Array)</td>
+          <td>ActiveRecord models</td>
+        </tr>
+        <tr>
+          <td>Performance</td>
+          <td>Faster</td>
+          <td>Slower (creates objects)</td>
+        </tr>
+        <tr>
+          <td>Use Case</td>
+          <td>Data only</td>
+          <td>Need model behavior</td>
+        </tr>
+      </table>
+
+      <h3>⚠️ Example Gotcha</h3>
+      <pre><code>User.select(:email).first.name
+      # =&gt; nil (name wasn’t selected)</code></pre>
+
+      <h3>🧠 Interview Tip</h3>
+      <p>
+        Use <code>pluck</code> for performance, and <code>select</code> for
+        model-like access with limited fields.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. What are Strong Parameters? Why are they needed?</h2>
+      <p>
+        <strong>Strong Parameters</strong> protect against mass-assignment
+        vulnerabilities by allowing only permitted attributes for model updates.
+      </p>
+
+      <h3>Why Needed?</h3>
+      <p>
+        Without it, users could update sensitive fields (e.g., admin) via form
+        submissions, causing security risks.
+      </p>
+
+      <h3>Example</h3>
+      <pre><code>def user_params
+        params.require(:user).permit(:name, :email, :password)
+      end
+      
+      User.create(user_params)</code></pre>
+
+      <h3>Key Points</h3>
+      <ul>
+        <li>Whitelists allowed params</li>
+        <li>Introduced in Rails 4</li>
+        <li>Prevents unauthorized attribute changes</li>
+      </ul>
+
+      <p>
+        <strong>Interview Tip:</strong> Always whitelist attributes in
+        controllers to secure mass assignment.
+      </p>
+    </section>
+  </body>
+</html>

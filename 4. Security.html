@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rails Security Interview Questions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+      max-width: 900px;
+      background-color: #f9f9f9;
+      color: #222;
+      margin-left: 100px;
+    }
+    h2 {
+      color: #2c3e50;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 6px;
+      margin-top: 40px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 12px;
+      overflow-x: auto;
+      border-left: 5px solid #3498db;
+      margin: 12px 0;
+      border-radius: 4px;
+    }
+    code {
+      font-family: monospace;
+      background: #eee;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+
+  <h1>Ruby on Rails Security Interview Questions</h1>
+
+  <section id="mass-assignment">
+    <h2>2. What are mass-assignment vulnerabilities?</h2>
+    <p><strong>Mass-assignment</ occurs when Rails allows assigning multiple model attributes at once, typically using methods like <code>Model.new(params[:model])</code> or <code>update(params[:model])</code>.</p>
+    <p><strong>Vulnerability:</strong> If unfiltered params are passed directly, an attacker can set protected attributes (e.g., <code>admin</code> flag, <code>role</code>, or <code>user_id</code>) that they shouldn’t be allowed to change.</p>
+
+    <p><strong>Example:</strong></p>
+    <pre><code># params = { user: { name: "Bob", admin: true } }
+User.new(params[:user]) # sets admin to true if not protected
+</code></pre>
+
+    <p><strong>Defense:</strong></p>
+    <ul>
+      <li>Use <code>Strong Parameters</code> in Rails controllers to whitelist allowed attributes.</li>
+      <li>Example:</li>
+    </ul>
+    <pre><code>def user_params
+  params.require(:user).permit(:name, :email)
+end
+
+User.new(user_params) # only :name and :email can be mass-assigned
+</code></pre>
+  </section>
+
+  <section id="sql-injection">
+    <h2>1. How does Rails prevent SQL injection?</h2>
+    <p><strong>SQL injection</ is an attack where malicious SQL code is inserted into queries via user input.</p>
+
+    <p><strong>Rails Defense:</strong> Rails uses <code>ActiveRecord</code> query methods that safely escape inputs by default.</p>
+
+    <p><strong>Example of safe query:</strong></p>
+    <pre><code>User.where(email: params[:email]) 
+# Rails sanitizes params[:email] automatically
+</code></pre>
+
+    <p><strong>Unsafe example (do not do this):</strong></p>
+    <pre><code>User.where("email = '#{params[:email]}'") 
+# Vulnerable to SQL injection
+</code></pre>
+
+    <p><strong>Use parameterized queries or ActiveRecord helpers to prevent injection.</strong></p>
+  </section>
+
+  <section id="hidden-fields">
+    <h2>3. Scenario: A user tampers with hidden input fields in a form. How would you prevent data leakage or misuse?</h2>
+    <p>Hidden fields in forms can be modified by malicious users since they are client-side and not secure.</p>
+    <p><strong>Defenses:</strong></p>
+    <ul>
+      <li>Never trust hidden form data for sensitive or critical information.</li>
+      <li>Always verify and authorize sensitive data on the server side.</li>
+      <li>Use server-side sessions or database lookups to confirm the validity of IDs or tokens.</li>
+      <li>Use strong parameter whitelisting to prevent unwanted attribute updates.</li>
+      <li>Consider using encrypted or signed tokens (e.g., Rails’ <code>signed</code> or <code>encrypted</code> cookies) to detect tampering.</li>
+    </ul>
+    <p><strong>Example:</strong> Instead of trusting a hidden user role field, check the user’s role in the database based on their session:</p>
+    <pre><code># Bad:
+&lt;input type="hidden" name="user[role]" value="admin"&gt;
+
+# Good:
+# Don't trust params[:user][:role], fetch from current_user on server side.
+</code></pre>
+  </section>
+
+  <section id="common-vulnerabilities">
+    <h2>4. What are common Rails vulnerabilities and how do you defend against them? (XSS, CSRF, etc.)</h2>
+
+    <h3>XSS (Cross-Site Scripting)</h3>
+    <p><strong>What it is:</strong> Injecting malicious JavaScript into pages that other users view.</p>
+    <p><strong>Rails defense:</strong> Auto-escaping HTML in views by default with <code>&lt;%= %&gt;</code>.</p>
+    <pre><code>&lt;%= params[:name] %&gt;  # Escaped output, safe
+&lt;%== params[:name] %&gt;  # Raw HTML output, dangerous
+</code></pre>
+    <p>Use <code>sanitize</code> helper to allow safe HTML.</p>
+
+    <h3>CSRF (Cross-Site Request Forgery)</h3>
+    <p><strong>What it is:</strong> Tricks users into submitting requests unknowingly using their logged-in session.</p>
+    <p><strong>Rails defense:</strong> Authenticity tokens automatically included in forms and verified on requests.</p>
+    <pre><code>&lt;%= form_with url: "/posts" do |f| %&gt;
+  &lt;%= f.text_field :title %&gt;
+&lt;% end %&gt;
+
+# protect_from_forgery with: :exception is enabled by default
+</code></pre>
+
+    <h3>Clickjacking</h3>
+    <p><strong>What it is:</strong> Attacker loads your site in a hidden iframe and tricks users into clicking.</p>
+    <p><strong>Rails defense:</strong> Use the <code>X-Frame-Options</code> header.</p>
+    <pre><code># config/application.rb
+config.action_dispatch.default_headers = {
+  'X-Frame-Options' =&gt; 'SAMEORIGIN'
+}
+</code></pre>
+  </section>
+
+</body>
+</html>

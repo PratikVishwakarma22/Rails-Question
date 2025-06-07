@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rails 7 Autoloading (Zeitwerk) Explanation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 20px;
+        max-width: 800px;
+        color: #222;
+        background: #f9f9f9;
+        margin-left: 100px;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #2c3e50;
+      }
+      code {
+        background: #eee;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-family: Consolas, monospace;
+        font-size: 0.95em;
+      }
+      pre {
+        background: #eee;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      ul {
+        margin-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+    <h1>1. How does autoloading work in Rails 7 (Zeitwerk)?</h1>
+
+    <p>
+      <strong>Rails 7 uses the <em>Zeitwerk</em> autoloader</strong> as its
+      default mechanism to automatically load Ruby classes and modules based on
+      the file structure. This replaced the older classic autoloader used in
+      previous Rails versions.
+    </p>
+
+    <h2>How it works:</h2>
+    <ul>
+      <li>
+        <strong>Mapping constants to files:</strong> Zeitwerk scans the autoload
+        paths (like <code>app/models</code>, <code>app/controllers</code>, etc.)
+        during application boot and builds an internal map of constant names to
+        their corresponding file paths.
+      </li>
+      <li>
+        <strong>Lazy loading:</strong> When a constant (class or module) is
+        first referenced, Zeitwerk intercepts <code>const_missing</code> and
+        loads the corresponding file automatically.
+      </li>
+      <li>
+        <strong>Convention over configuration:</strong> The directory structure
+        must match the namespace hierarchy, and filenames must be the snake_case
+        versions of constant names.
+      </li>
+      <li>
+        <strong>Development mode:</strong> Autoloaded constants are reloaded on
+        each request, allowing code changes without restarting the server.
+      </li>
+      <li>
+        <strong>Production mode:</strong> Zeitwerk eager loads all code upfront
+        for thread safety and performance.
+      </li>
+      <li>
+        <strong>Rails integration:</strong> Rails configures Zeitwerk
+        automatically with standard folders like <code>app/models</code>,
+        <code>app/controllers</code>, and <code>lib</code>, but you can
+        customize autoload paths in <code>config/application.rb</code>.
+      </li>
+    </ul>
+
+    <h2>Benefits of Zeitwerk:</h2>
+    <ul>
+      <li>Thread-safe and performant loading.</li>
+      <li>Predictable and consistent loading of constants.</li>
+      <li>
+        No need for manual <code>require</code> statements in your application
+        code.
+      </li>
+      <li>Supports nested namespaces cleanly.</li>
+    </ul>
+
+    <h2>Debugging and tooling:</h2>
+    <ul>
+      <li>
+        You can run <code>bin/rails zeitwerk:check</code> to verify your
+        project's compliance with Zeitwerk conventions.
+      </li>
+      <li>
+        Misnamed files or mismatched namespaces cause clear, actionable error
+        messages.
+      </li>
+    </ul>
+
+    <h2>Example:</h2>
+    <pre><code># app/models/user.rb
+class User
+  # ...
+end
+
+# app/models/admin/user.rb
+module Admin
+  class User
+    # ...
+  end
+end
+</code></pre>
+
+    <p>
+      When you reference <code>User</code>, Zeitwerk loads
+      <code>app/models/user.rb</code>. When you reference
+      <code>Admin::User</code>, it loads <code>app/models/admin/user.rb</code>.
+    </p>
+
+    <h2>Summary:</h2>
+    <p>
+      Rails 7's Zeitwerk autoloader automatically loads constants on demand
+      based on a strict mapping between namespaces and file paths. It enables
+      faster boot times, code reloading in development, and thread-safe eager
+      loading in production, all while eliminating the need for manual
+      <code>require</code> statements.
+    </p>
+
+    <div class="summary">
+      <h2>
+        How Autoloading Used to Happen Before Zeitwerk (Classic Autoloader)
+      </h2>
+      <p>
+        Before Rails 6, Rails used the classic autoloader which was less strict
+        and more error-prone. It relied on Ruby’s <code>autoload</code> method
+        and manual requires, which could cause load order issues and bugs with
+        nested namespaces. Reloading in development was less reliable, and it
+        was not thread-safe, causing problems with concurrency.
+      </p>
+      <p>
+        Zeitwerk replaced the classic autoloader to provide a robust,
+        thread-safe, and predictable autoloading mechanism that enforces
+        consistent naming and file structure conventions.
+      </p>
+    </div>
+
+    <section>
+      <h1>2. What is a Railtie? How does it relate to an Engine?</h1>
+
+      <section>
+        <h2>What is a Railtie?</h2>
+        <ul>
+          <li>
+            A <strong>Railtie</strong> is the core extension mechanism for Ruby
+            on Rails.
+          </li>
+          <li>
+            It allows you to hook into the Rails initialization process to add
+            your own configuration, initializers, rake tasks, middleware,
+            generators, and more.
+          </li>
+          <li>
+            All major Rails components (like ActiveRecord, ActionController) are
+            implemented internally as Railties.
+          </li>
+          <li>
+            Railties enable you to extend or customize Rails without modifying
+            Rails source code directly.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What is an Engine and how does it relate to Railtie?</h2>
+        <ul>
+          <li>
+            A <strong>Rails Engine</strong> is like a mini Rails application
+            that can be embedded inside another Rails app.
+          </li>
+          <li>
+            An Engine <em>inherits</em> from Railtie, so it includes all Railtie
+            features and hooks.
+          </li>
+          <li>
+            In addition to Railtie’s extension capabilities, Engines can have
+            their own routes, models, controllers, views, migrations, assets,
+            and more.
+          </li>
+          <li>
+            Engines are used to package reusable application functionality that
+            behaves like a standalone app inside your main Rails app.
+          </li>
+          <li>
+            Examples include gems like <code>Devise</code> or
+            <code>Spree</code> which provide full-featured engines.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Summary Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Concept</th>
+              <th>Description</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Railtie</strong></td>
+              <td>Core extension mechanism for Rails</td>
+              <td>
+                Hook into Rails boot and initialization to customize behavior
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Engine</strong></td>
+              <td>Mini Rails app subclassing Railtie</td>
+              <td>
+                Package reusable app features (routes, views, models, assets)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <section>
+      <h2>How Railtie Lets You Customize Rails Boot</h2>
+
+      <p>
+        When you create a Railtie by subclassing <code>Rails::Railtie</code>,
+        Rails automatically runs certain hooks during its boot process. You can
+        put your code inside these hooks to modify Rails behavior.
+      </p>
+
+      <section>
+        <h3>Main ways to customize Rails using a Railtie:</h3>
+
+        <section>
+          <h4>1. Add Initializers</h4>
+          <p>
+            Initializers run at a specific point during Rails boot — you can put
+            setup code here.
+          </p>
+          <pre><code>class MyGemRailtie &lt; Rails::Railtie
+      initializer "my_gem.configure_rails" do
+        # This code runs during Rails initialization
+        puts "Configuring MyGem inside Rails boot"
+        # For example, set config values or initialize stuff here
+      end
+    end
+    </code></pre>
+        </section>
+
+        <section>
+          <h4>2. Add Configuration</h4>
+          <p>You can define config options that Rails or your app can read:</p>
+          <pre><code>class MyGemRailtie &lt; Rails::Railtie
+      config.my_gem = ActiveSupport::OrderedOptions.new
+    
+      initializer "my_gem.configure_rails" do |app|
+        # You can access app config here, like
+        puts "MyGem config value: #{app.config.my_gem.some_option}"
+      end
+    end
+    </code></pre>
+          <p>
+            Your app can set this in <code>config/application.rb</code> like:
+          </p>
+          <pre><code>config.my_gem.some_option = "custom value"
+    </code></pre>
+        </section>
+
+        <section>
+          <h4>3. Add Rake Tasks</h4>
+          <p>You can add custom rake tasks that become available in Rails:</p>
+          <pre><code>class MyGemRailtie &lt; Rails::Railtie
+      rake_tasks do
+        load "lib/tasks/my_gem_tasks.rake"
+      end
+    end
+    </code></pre>
+          <p>
+            This will load your gem’s rake tasks into the Rails app’s
+            <code>rake</code> command.
+          </p>
+        </section>
+
+        <section>
+          <h4>4. Add Middleware</h4>
+          <p>You can insert middleware into Rails’ middleware stack:</p>
+          <pre><code>class MyGemRailtie &lt; Rails::Railtie
+      initializer "my_gem.middleware" do |app|
+        app.middleware.use MyCustomMiddleware
+      end
+    end
+    </code></pre>
+        </section>
+      </section>
+
+      <section>
+        <h3>Summary: Railtie Hooks You Can Use</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Hook</th>
+              <th>Purpose</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>initializer</code></td>
+              <td>Run code during Rails boot</td>
+              <td>Setup config, initialize libraries</td>
+            </tr>
+            <tr>
+              <td><code>rake_tasks</code></td>
+              <td>Load custom rake tasks</td>
+              <td>Add gem-specific rake tasks</td>
+            </tr>
+            <tr>
+              <td><code>console</code></td>
+              <td>Add code for Rails console</td>
+              <td>Customize console environment</td>
+            </tr>
+            <tr>
+              <td><code>middleware</code></td>
+              <td>Add middleware into stack</td>
+              <td>Insert custom middleware</td>
+            </tr>
+            <tr>
+              <td>
+                <code>before_configuration</code>,
+                <code>after_initialize</code>, etc.
+              </td>
+              <td>Other lifecycle hooks</td>
+              <td>Fine-grained control of boot process</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p>
+        <strong>In short:</strong> Railtie provides special hooks that Rails
+        calls during startup. You put your customization code inside these
+        hooks, and Rails runs it automatically when it boots or runs rake tasks.
+        Engines build on Railtie to add full app-like functionality.
+      </p>
+    </section>
+  </body>
+</html>

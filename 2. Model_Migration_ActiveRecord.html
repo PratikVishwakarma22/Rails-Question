@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1. What are migrations in Rails and why are they important?</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 20px auto;
+        background-color: #1e1e1e; /* softer dark background */
+        color: #e0e0e0;
+        max-width: 900px;
+        padding: 0 20px;
+      }
+
+      h1,
+      h2 {
+        color: #4dd0e1; /* soft cyan */
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+        background: #2a2a2a; /* lighter dark gray */
+        color: #e0e0e0;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #333;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #3a3a3a;
+      }
+
+      code {
+        background: #2e2e2e;
+        padding: 3px 6px;
+        border-radius: 5px;
+        color: #80deea; /* lighter cyan */
+        font-family: monospace;
+      }
+
+      .qa-container {
+        background: #2a2a2a;
+        padding: 25px 30px;
+        margin-top: 40px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(77, 208, 225, 0.3); /* soft cyan glow */
+      }
+
+      .qa-container h2 {
+        margin-top: 0;
+        color: #4dd0e1;
+      }
+
+      .qa-container h3 {
+        color: #80deea; /* lighter cyan */
+        margin-bottom: 0.5em;
+      }
+
+      .qa-container blockquote {
+        font-style: italic;
+        color: #ccc;
+        border-left: 5px solid #4dd0e1;
+        margin: 20px 0;
+        padding-left: 15px;
+        background-color: #223a3d; /* dark cyan shade */
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+    <section id="qa-container">
+      <h2>
+        1. What are migrations in Rails and why are they important? (Short
+        Notes)
+      </h2>
+
+      <h3>✅ Definition:</h3>
+      <ul>
+        <li>Migrations are Ruby classes used to modify the database schema.</li>
+        <li>They act like version control for your database.</li>
+      </ul>
+
+      <h3>🌟 Key Benefits:</h3>
+      <ul>
+        <li>
+          <strong>Collaboration:</strong> Easy schema sharing across teams.
+        </li>
+        <li>
+          <strong>Consistency:</strong> Ensures all environments are in sync.
+        </li>
+        <li><strong>Reversible:</strong> Supports safe rollbacks.</li>
+        <li>
+          <strong>Version Tracking:</strong> Keeps a complete history of schema
+          changes via migration files.
+        </li>
+      </ul>
+
+      <h3>🎁 Why Important:</h3>
+      <ul>
+        <li>Keeps schema consistent across environments (dev/test/prod).</li>
+        <li>Avoids manual SQL; changes are trackable in code.</li>
+        <li>Supports rollback and forward migration of schema.</li>
+      </ul>
+
+      <h3>⚙️ How They Work:</h3>
+      <ul>
+        <li>Stored in <code>db/migrate</code> with timestamped filenames.</li>
+        <li>Run using <code>rails db:migrate</code>.</li>
+        <li>Rollback using <code>rails db:rollback</code>.</li>
+        <li>Tracks state using <code>schema_migrations</code> table.</li>
+      </ul>
+
+      <h3>🔀 Extras:</h3>
+      <ul>
+        <li>
+          Schema is also reflected in <code>schema.rb</code> or
+          <code>structure.sql</code>.
+        </li>
+        <li>Reversible operations supported via <code>change</code> method.</li>
+        <li>Can include data changes, not just structure.</li>
+      </ul>
+    </section>
+
+    <section id="qa-container">
+      <h2>Advanced Rails Migration Questions and Answers</h2>
+
+      <h3>1. How does Rails know which migrations have been run already?</h3>
+      <p>
+        Rails uses a special table called <code>schema_migrations</code> which
+        stores the timestamps of the migrations that have been executed. When
+        you run <code>rails db:migrate</code>, Rails checks this table to see
+        which migrations are pending.
+      </p>
+
+      <h3>
+        2. What's the difference between <code>change</code>, <code>up</code>,
+        and <code>down</code> in migrations?
+      </h3>
+      <p>
+        <code>change</code> is used when Rails can infer how to reverse the
+        migration. <code>up</code> is for applying changes, and
+        <code>down</code> is for reversing them manually. Use
+        <code>up/down</code> when changes are not reversible automatically.
+      </p>
+
+      <h3>
+        3. What happens if a migration fails halfway? How do you ensure
+        atomicity?
+      </h3>
+      <p>
+        Rails wraps each migration in a transaction (if supported by the DB). If
+        it fails, the entire migration is rolled back. For large or unsupported
+        operations, consider manual steps or idempotent scripts.
+      </p>
+
+      <h3>
+        4. Difference between <code>schema.rb</code> and
+        <code>structure.sql</code>?
+      </h3>
+      <p>
+        <code>schema.rb</code> is Ruby-based and DB-agnostic.
+        <code>structure.sql</code> captures full SQL including DB-specific
+        features. Use <code>structure.sql</code> for advanced DB features like
+        triggers, views, or custom functions.
+      </p>
+
+      <h3>5. How do you write a reversible migration when modifying data?</h3>
+      <p>
+        Use the <code>reversible</code> method inside <code>change</code> to
+        specify both up and down actions explicitly.
+      </p>
+
+      <h3>
+        6. Limitations of migrations in production and how to handle them?
+      </h3>
+      <p>
+        Large table changes (e.g., adding columns with default, renaming) can
+        lock tables. Use background data migration, add columns without
+        defaults, or use batching techniques.
+      </p>
+
+      <h3>
+        7. Team member references old column after it's renamed. What to do?
+      </h3>
+      <p>
+        Communicate clearly, revert or adjust their migration, and coordinate
+        schema changes via code reviews and feature branches.
+      </p>
+
+      <h3>8. Bad migration deployed to production. How to recover?</h3>
+      <p>
+        Use <code>rails db:rollback</code> if safe. Otherwise, create a new
+        corrective migration. Avoid editing past migrations in production
+        environments.
+      </p>
+
+      <h3>9. Backfilling millions of rows efficiently?</h3>
+      <p>
+        Use background jobs, batching (e.g., in slices of 1000 records), and
+        avoid locking the table by deferring default values.
+      </p>
+
+      <h3>10. Drop a column used by unknown code?</h3>
+      <p>
+        Search the codebase, deprecate with warnings, monitor usage logs, then
+        safely remove after a grace period.
+      </p>
+
+      <h3>11. Can migrations be run concurrently?</h3>
+      <p>
+        No, Rails assumes linear, non-concurrent migration execution. Running
+        multiple at the same time can lead to race conditions or schema
+        mismatch.
+      </p>
+
+      <h3>12. Difference between running migrations in dev vs production?</h3>
+      <p>
+        In development, migrations are instant and low risk. In production,
+        large changes may require downtime planning, background processing, or
+        safer operations like adding indexes concurrently.
+      </p>
+
+      <h3>13. Safe deployment of a huge migration in production?</h3>
+      <p>
+        Break it into smaller steps, use <code>add_column</code> without
+        default, backfill in background jobs, then add constraints later.
+      </p>
+
+      <h3>14. Re-adding an index with different options?</h3>
+      <p>
+        Use <code>remove_index</code> followed by <code>add_index</code> with
+        new options. Use <code>algorithm: :concurrently</code> if supported by
+        the DB to avoid locking.
+      </p>
+
+      <h3>15. Version control of migrations in monorepos?</h3>
+      <p>
+        Namespace migrations by engine, ensure each engine has its own migration
+        path, and resolve conflicts with careful versioning and coordination.
+      </p>
+
+      <h3>16. Migration is not reversible. What now?</h3>
+      <p>
+        Add a custom <code>down</code> method or use
+        <code>reversible do |dir|</code> block to define both directions
+        explicitly.
+      </p>
+
+      <h3>17. Safely add foreign keys with existing data?</h3>
+      <p>
+        Ensure data integrity first (clean up orphaned records), then add the
+        constraint. Consider disabling validations temporarily if necessary.
+      </p>
+
+      <h3>18. Organizing and naming migrations in large apps?</h3>
+      <p>
+        Use descriptive names (e.g., <code>add_status_to_orders</code>), group
+        related changes, and avoid overlapping schema edits in parallel
+        branches.
+      </p>
+
+      <h3>19. CI/CD migration timeout. What to do?</h3>
+      <p>
+        Profile the migration locally, optimize it (e.g., add columns without
+        defaults), or move long tasks to a background job.
+      </p>
+
+      <h3>20. Renaming a table used by external services?</h3>
+      <p>
+        Coordinate with stakeholders, create a view or alias for backward
+        compatibility, or schedule downtime with proper notification.
+      </p>
+    </section>
+
+    <section class="qa-container">
+      <h2>Validations and Callbacks in Rails</h2>
+
+      <h3>Validations:</h3>
+      <p>
+        Validations are rules you set in your Rails model to make sure that the
+        data saved to the database is correct and complete. For example, you can
+        validate that a user’s email is present and unique, or that a password
+        is at least 6 characters long. If the data doesn’t pass these checks,
+        Rails won’t save it.
+      </p>
+
+      <h3>Callbacks:</h3>
+      <p>
+        Callbacks are special methods that run automatically at certain points
+        in the life of an object, like before it is saved, after it is created,
+        or before it is deleted. You use callbacks to perform actions like
+        sending a welcome email after a user signs up, or cleaning up related
+        data before deleting a record.
+      </p>
+    </section>
+  </body>
+</html>
