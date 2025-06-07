@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slow Page Load - DB Queries</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000;
+        background: #fff;
+        margin: 2rem;
+        line-height: 1.5;
+        font-size: 14pt;
+        margin-left: 100px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: #000;
+        font-weight: bold;
+        margin-top: 1.5rem;
+      }
+
+      pre {
+        background: #f8f8f8;
+        border: 1px solid #999;
+        padding: 1rem;
+        font-family: Consolas, monospace;
+        font-size: 13pt;
+        overflow-x: auto;
+      }
+
+      ul {
+        margin-left: 1.5rem;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13pt;
+        margin-top: 1rem;
+      }
+
+      th,
+      td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: left;
+      }
+
+      @media print {
+        body {
+          background: #fff !important;
+          color: #000 !important;
+        }
+        pre {
+          background: #fff !important;
+          border: 1px solid #000 !important;
+          color: #000 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+    <h1>[1]. Scenario: Page Loads Slow Due to Too Many DB Queries</h1>
+
+    <h2>How to Identify the Problem</h2>
+    <ul>
+      <li>
+        <strong>Check Rails Logs:</strong> Review SQL queries and timings to
+        spot repeated queries (N+1 problem).
+      </li>
+      <li>
+        <strong>Use Tools:</strong> Add gems like <code>bullet</code> and
+        <code>rack-mini-profiler</code> to detect inefficient queries.
+      </li>
+      <li>
+        <strong>Analyze Slow Queries:</strong> Use <code>EXPLAIN</code> in your
+        database console to check query execution plans.
+      </li>
+    </ul>
+
+    <h2>How to Fix the Problem</h2>
+    <ul>
+      <li>
+        <strong>Fix N+1 Queries:</strong> Use
+        <code>.includes(:association)</code> to eager load related data.
+      </li>
+      <li>
+        <strong>Select Needed Columns:</strong> Avoid loading unnecessary data
+        with <code>.select</code>.
+      </li>
+      <li>
+        <strong>Use Counter Caches:</strong> Cache counts of associations
+        instead of querying repeatedly.
+      </li>
+      <li>
+        <strong>Cache Expensive Results:</strong> Use fragment or query caching.
+      </li>
+      <li>
+        <strong>Paginate Large Datasets:</strong> Limit records loaded per page
+        using pagination gems.
+      </li>
+      <li>
+        <strong>Add Database Indexes:</strong> Ensure columns in WHERE or JOIN
+        clauses are indexed.
+      </li>
+    </ul>
+
+    <h2>Example: Fixing N+1 Query</h2>
+    <pre>
+# Bad: triggers N+1 queries
+@posts = Post.all
+@posts.each do |post|
+  puts post.comments.count
+end
+
+# Good: eager loads comments to avoid extra queries
+@posts = Post.includes(:comments).all
+@posts.each do |post|
+  puts post.comments.count
+end
+  </pre
+    >
+
+    <h2>Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>How to Do It</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Identify N+1 / Slow Queries</td>
+          <td>Rails logs, bullet gem, rack-mini-profiler, monitoring tools</td>
+        </tr>
+        <tr>
+          <td>Fix N+1</td>
+          <td>Use <code>.includes</code> to eager load associations</td>
+        </tr>
+        <tr>
+          <td>Optimize Queries</td>
+          <td>Select needed columns, add proper database indexes</td>
+        </tr>
+        <tr>
+          <td>Cache Results</td>
+          <td>Fragment caching or query caching</td>
+        </tr>
+        <tr>
+          <td>Pagination</td>
+          <td>Limit number of records loaded per page</td>
+        </tr>
+        <tr>
+          <td>Use Counter Cache</td>
+          <td>Cache counts of associations to avoid expensive COUNT queries</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1>[2]. How does memoization improve performance in Rails?</h1>
+
+    <h2>Answer:</h2>
+    <p>
+      Memoization is a technique that caches the result of a method the first
+      time it is computed so that subsequent calls return the cached result
+      instead of recomputing it.
+    </p>
+
+    <h2>Benefits in Rails:</h2>
+    <ul>
+      <li>
+        <strong>Reduces expensive computations:</strong> Avoids running complex
+        calculations or database queries multiple times.
+      </li>
+      <li>
+        <strong>Improves response time:</strong> Faster method calls after the
+        initial computation.
+      </li>
+      <li>
+        <strong>Decreases database load:</strong> Prevents repeated database
+        calls by caching the result within the object’s lifecycle.
+      </li>
+    </ul>
+
+    <h2>Common Implementation in Rails:</h2>
+    <pre>
+  def expensive_method
+    @expensive_method ||= begin
+      # heavy computation or DB call here
+      User.where(active: true).count
+    end
+  end
+    </pre>
+
+    <p>
+      Here, the method runs the query once and stores the result in
+      <code>@expensive_method</code>. Subsequent calls return the stored value
+      without hitting the database again.
+    </p>
+
+    <h1>[3]. How do you profile and optimize Rails performance?</h1>
+
+    <h2>Profiling Rails Performance</h2>
+    <ul>
+      <li>
+        <strong>Rails Logs:</strong> Analyze request logs to identify slow
+        queries and actions.
+      </li>
+      <li>
+        <strong>Rack Mini Profiler:</strong> Tool to display performance metrics
+        on each page load.
+      </li>
+      <li>
+        <strong>Bullet Gem:</strong> Detects N+1 queries and unused eager
+        loading.
+      </li>
+      <li>
+        <strong>New Relic / Skylight / Datadog:</strong> Production monitoring
+        tools that provide deep insights.
+      </li>
+      <li>
+        <strong>Database EXPLAIN:</strong> Use EXPLAIN to analyze query
+        execution plans.
+      </li>
+    </ul>
+
+    <h2>Optimizing Rails Performance</h2>
+    <ul>
+      <li>
+        <strong>Eager Loading:</strong> Use <code>.includes</code> to avoid N+1
+        queries.
+      </li>
+      <li>
+        <strong>Query Optimization:</strong> Select only required columns and
+        add proper indexes.
+      </li>
+      <li>
+        <strong>Caching:</strong> Use fragment caching, low-level caching, and
+        HTTP caching.
+      </li>
+      <li>
+        <strong>Background Jobs:</strong> Offload slow or non-critical tasks to
+        background workers.
+      </li>
+      <li>
+        <strong>Pagination:</strong> Limit records loaded per request to avoid
+        large data loads.
+      </li>
+      <li>
+        <strong>Code Profiling:</strong> Use tools like ruby-prof or stackprof
+        to profile CPU and memory usage.
+      </li>
+    </ul>
+
+    <h2>Summary Table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>How to Do It</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Profile</td>
+          <td>
+            Rails logs, rack-mini-profiler, bullet gem, New Relic, EXPLAIN
+          </td>
+        </tr>
+        <tr>
+          <td>Fix N+1</td>
+          <td>Use <code>.includes</code> to eager load associations</td>
+        </tr>
+        <tr>
+          <td>Optimize Queries</td>
+          <td>Select only needed columns, add indexes</td>
+        </tr>
+        <tr>
+          <td>Cache</td>
+          <td>Fragment caching, HTTP caching, low-level caching</td>
+        </tr>
+        <tr>
+          <td>Use Background Jobs</td>
+          <td>Offload long-running tasks with Sidekiq, Resque, etc.</td>
+        </tr>
+        <tr>
+          <td>Paginate</td>
+          <td>Use pagination gems like Kaminari or WillPaginate</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1>[4]. What is a Materialized View?</h1>
+
+    <p>
+      A <strong>materialized view</strong> is a database object that contains
+      the results of a query stored physically on disk. Unlike a normal view,
+      which computes its data dynamically each time it is accessed, a
+      materialized view stores the query result so that it can be accessed
+      quickly.
+    </p>
+
+    <h2>Key Points:</h2>
+    <ul>
+      <li>
+        Materialized views store precomputed data for faster query performance.
+      </li>
+      <li>They improve performance for complex queries or expensive joins.</li>
+      <li>
+        The data in a materialized view needs to be refreshed to stay up-to-date
+        with the underlying tables.
+      </li>
+      <li>
+        Refresh can be done manually or automatically depending on the database
+        system.
+      </li>
+    </ul>
+
+    <h2>Example Usage</h2>
+
+    <p>
+      Suppose you have a complex query joining multiple tables to get sales
+      summary:
+    </p>
+
+    <pre>
+CREATE MATERIALIZED VIEW sales_summary AS
+SELECT product_id, SUM(quantity) AS total_quantity, SUM(price) AS total_price
+FROM sales
+GROUP BY product_id;
+  </pre
+    >
+
+    <p>
+      Now, instead of running this expensive query every time, you can query
+      <code>sales_summary</code> directly:
+    </p>
+
+    <pre>
+SELECT * FROM sales_summary WHERE product_id = 101;
+  </pre
+    >
+
+    <h2>Refreshing a Materialized View</h2>
+    <p>
+      Since the data is stored physically, you must refresh the view to update
+      its data:
+    </p>
+
+    <pre>
+REFRESH MATERIALIZED VIEW sales_summary;
+  </pre
+    >
+
+    <h2>Advantages:</h2>
+    <ul>
+      <li>Speeds up query response times.</li>
+      <li>Useful for reporting and analytics.</li>
+    </ul>
+
+    <h2>Disadvantages:</h2>
+    <ul>
+      <li>Data can become stale until refreshed.</li>
+      <li>Consumes storage space.</li>
+      <li>Refreshing can be expensive for large datasets.</li>
+    </ul>
+  </body>
+</html>

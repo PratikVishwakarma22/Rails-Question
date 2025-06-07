@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Microservices & Agile Concepts</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 20px;
+        max-width: 900px;
+        color: #222;
+        background-color: #f9f9f9;
+        margin-left: 100px;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #004d99;
+      }
+      p {
+        margin-bottom: 1em;
+      }
+      ul {
+        margin-bottom: 1em;
+        padding-left: 20px;
+      }
+      table {
+        border-collapse: collapse;
+        margin-bottom: 1.5em;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #e6f2ff;
+      }
+      code {
+        background-color: #eee;
+        padding: 2px 6px;
+        font-family: monospace;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="nav-button">⬅ Back to Home</a>
+
+    <h1>[1]. Monolithic and Microservice-based Architecture</h1>
+
+    <h2>(1.1)Monolithic Architecture</h2>
+    <p>
+      A single unified software application where all components (UI, business
+      logic, data access) are tightly integrated into one codebase and deployed
+      together.
+    </p>
+    <h3>Characteristics</h3>
+    <ul>
+      <li>Single codebase, single deployable unit</li>
+      <li>All features and services run in one process</li>
+      <li>Shared database for all modules</li>
+      <li>Tightly coupled components</li>
+    </ul>
+    <h3>Advantages</h3>
+    <ul>
+      <li>Simple to develop and test initially</li>
+      <li>Easier to deploy as one artifact</li>
+      <li>Better performance due to in-process calls</li>
+      <li>Easier to manage transactions and consistency</li>
+    </ul>
+    <h3>Disadvantages</h3>
+    <ul>
+      <li>Becomes large and complex as the app grows</li>
+      <li>Hard to scale parts independently — must scale entire app</li>
+      <li>Slower development speed with bigger teams due to tight coupling</li>
+      <li>Difficult to adopt new technologies incrementally</li>
+      <li>Risk of affecting the entire system with one bug or change</li>
+      <li>Deployment is all-or-nothing — no partial updates</li>
+    </ul>
+
+    <h2>(1.2)Microservice-Based Architecture</h2>
+    <p>
+      An application composed of multiple
+      <strong>small, independent services</strong>, each responsible for a
+      specific business capability, communicating over lightweight protocols
+      like HTTP or messaging.
+    </p>
+    <h3>Characteristics</h3>
+    <ul>
+      <li>Each microservice is a standalone deployable unit</li>
+      <li>Services can be written in different languages/technologies</li>
+      <li>Each service usually has its own database (polyglot persistence)</li>
+      <li>Services communicate over the network (APIs, message brokers)</li>
+      <li>Decentralized data management and governance</li>
+    </ul>
+    <h3>Advantages</h3>
+    <ul>
+      <li>Independent development and deployment of services</li>
+      <li>Scalability of individual services based on demand</li>
+      <li>Technology diversity: choose the best tech stack per service</li>
+      <li>Fault isolation: failure in one service doesn't crash entire app</li>
+      <li>Easier to understand and maintain smaller codebases</li>
+      <li>Aligns well with agile and DevOps practices</li>
+    </ul>
+    <h3>Disadvantages</h3>
+    <ul>
+      <li>Complex to manage many services</li>
+      <li>Network latency and communication overhead</li>
+      <li>Requires robust monitoring, logging, and fault tolerance</li>
+      <li>
+        Data consistency and transactions are more challenging (distributed)
+      </li>
+      <li>Deployment, debugging, and testing more complicated</li>
+      <li>
+        Requires investment in infrastructure (service discovery, API gateways)
+      </li>
+    </ul>
+
+    <h3>Summary Table</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Monolithic</th>
+          <th>Microservices</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Structure</td>
+          <td>Single unified app</td>
+          <td>Multiple independent services</td>
+        </tr>
+        <tr>
+          <td>Deployment</td>
+          <td>Single deployable unit</td>
+          <td>Many deployable units</td>
+        </tr>
+        <tr>
+          <td>Scalability</td>
+          <td>Scale entire app</td>
+          <td>Scale services independently</td>
+        </tr>
+        <tr>
+          <td>Development</td>
+          <td>Tightly coupled codebase</td>
+          <td>Loosely coupled, independent teams</td>
+        </tr>
+        <tr>
+          <td>Technology flexibility</td>
+          <td>Limited</td>
+          <td>Polyglot tech stacks</td>
+        </tr>
+        <tr>
+          <td>Fault tolerance</td>
+          <td>Single point of failure</td>
+          <td>Fault isolation</td>
+        </tr>
+        <tr>
+          <td>Data management</td>
+          <td>Single shared DB</td>
+          <td>Separate DBs per service</td>
+        </tr>
+        <tr>
+          <td>Complexity</td>
+          <td>Simple to start, complex later</td>
+          <td>More complex overall</td>
+        </tr>
+        <tr>
+          <td>Communication</td>
+          <td>In-process calls</td>
+          <td>Network calls (REST, messaging)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr />
+
+    <h1>[2]. What is Agile?</h1>
+    <p>
+      <strong>Agile</strong> is a project management and software development
+      approach that focuses on flexibility, collaboration, and delivering small,
+      working pieces of software quickly and frequently.
+    </p>
+    <p>
+      Instead of planning everything upfront (like waterfall), Agile embraces
+      change and continuous improvement throughout the project.
+    </p>
+
+    <h2>Key Principles of Agile</h2>
+    <ul>
+      <li>Individuals and interactions over processes and tools</li>
+      <li>Working software over comprehensive documentation</li>
+      <li>Customer collaboration over contract negotiation</li>
+      <li>Responding to change over following a plan</li>
+    </ul>
+
+    <h2>How Agile Works</h2>
+    <ul>
+      <li>
+        Work is divided into small cycles called <em>iterations</em> or
+        <em>sprints</em> (1–4 weeks long)
+      </li>
+      <li>
+        At the end of each sprint, the team delivers a working, potentially
+        shippable product increment
+      </li>
+      <li>Frequent feedback from stakeholders guides next steps</li>
+      <li>
+        Teams hold regular meetings like daily stand-ups, sprint planning,
+        reviews, and retrospectives
+      </li>
+      <li>
+        Emphasizes collaboration, adaptability, and continuous improvement
+      </li>
+    </ul>
+
+    <h2>Popular Agile Frameworks</h2>
+    <ul>
+      <li>
+        <strong>Scrum:</strong> Fixed-length sprints and defined roles (Scrum
+        Master, Product Owner, Development Team)
+      </li>
+      <li>
+        <strong>Kanban:</strong> Visualizes workflow on boards, emphasizing
+        continuous delivery and limiting work in progress
+      </li>
+      <li>
+        <strong>Extreme Programming (XP):</strong> Emphasizes technical
+        practices like test-driven development and pair programming
+      </li>
+    </ul>
+
+    <h2>Why Agile?</h2>
+    <ul>
+      <li>
+        Allows teams to adapt quickly to changing requirements or market
+        conditions
+      </li>
+      <li>Delivers value to customers faster and more frequently</li>
+      <li>Encourages better communication and teamwork</li>
+      <li>Reduces risk by getting feedback early and often</li>
+    </ul>
+
+    <hr />
+
+    <h1>[3]. Hard Microservices Interview Questions</h1>
+    <ol>
+      <li>
+        <strong
+          >How do you handle distributed transactions and maintain data
+          consistency across multiple microservices?</strong
+        ><br />
+        Discuss sagas, two-phase commit, eventual consistency, CQRS.
+      </li>
+      <li>
+        <strong>What strategies do you use to design service boundaries?</strong
+        ><br />
+        Talk about domain-driven design (DDD), bounded contexts, avoiding shared
+        databases.
+      </li>
+      <li>
+        <strong
+          >How do you manage API versioning and backward compatibility?</strong
+        >
+      </li>
+      <li>
+        <strong
+          >What patterns do you follow for inter-service communication?</strong
+        ><br />
+        Compare synchronous (REST, gRPC) vs asynchronous (messaging).
+      </li>
+      <li>
+        <strong>How do you handle service discovery and load balancing?</strong>
+      </li>
+      <li>
+        <strong
+          >What are challenges in logging and monitoring, and how do you solve
+          them?</strong
+        >
+      </li>
+      <li>
+        <strong>How do you implement fault tolerance and resilience?</strong
+        ><br />
+        Circuit breakers, bulkheads, retries, timeouts.
+      </li>
+      <li>
+        <strong>Security challenges unique to microservices?</strong><br />
+        Token-based auth, mutual TLS, API gateways, service mesh.
+      </li>
+      <li><strong>Handling database schema changes and migrations?</strong></li>
+      <li>
+        <strong>What is eventual consistency and how to design for it?</strong>
+      </li>
+      <li>
+        <strong>Managing transactions spanning multiple services?</strong><br />
+        Saga orchestration vs choreography.
+      </li>
+      <li><strong>How do microservices impact CI/CD pipelines?</strong></li>
+      <li><strong>Managing configuration and secrets?</strong></li>
+      <li>
+        <strong
+          >Explain the strangler pattern for microservices migration.</strong
+        >
+      </li>
+      <li><strong>When would you avoid microservices?</strong></li>
+    </ol>
+
+    <hr />
+
+    <h1>[4]. What is Saga?</h1>
+    <p>
+      A <strong>Saga</strong> is a design pattern to manage distributed
+      transactions and maintain data consistency across multiple microservices
+      without using traditional distributed transactions.
+    </p>
+    <h3>Why do we need Saga?</h3>
+    <ul>
+      <li>Each microservice owns its own database.</li>
+      <li>Business processes often span multiple services and databases.</li>
+      <li>
+        Traditional transactions locking resources across services don’t work
+        well in distributed systems.
+      </li>
+      <li>
+        Saga ensures eventual consistency by breaking big transactions into
+        smaller local transactions with compensations.
+      </li>
+    </ul>
+    <h3>How Saga works</h3>
+    <ul>
+      <li>A saga is a sequence of local transactions.</li>
+      <li>
+        Each local transaction updates its own database and publishes an event
+        to trigger the next step.
+      </li>
+      <li>If a step fails, compensating transactions undo previous steps.</li>
+      <li>
+        Coordination can be by orchestration (central coordinator) or
+        choreography (event-driven).
+      </li>
+    </ul>
+
+    <h3>Example</h3>
+    <p>Order → Payment → Inventory reservation</p>
+    <p>
+      If payment fails, compensations like order cancellation or refund are
+      triggered.
+    </p>
+
+    <h3>Summary Table</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Saga</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Purpose</td>
+          <td>Manage distributed transactions</td>
+        </tr>
+        <tr>
+          <td>Transaction type</td>
+          <td>Sequence of local transactions</td>
+        </tr>
+        <tr>
+          <td>Consistency</td>
+          <td>Eventual consistency</td>
+        </tr>
+        <tr>
+          <td>Failure handling</td>
+          <td>Compensating transactions (rollback)</td>
+        </tr>
+        <tr>
+          <td>Coordination</td>
+          <td>Orchestration or Choreography</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr />
+
+    <h1>How Saga Works with Different Databases</h1>
+    <p>
+      Each microservice performs its own <strong>local transaction</strong> in
+      its own database, guaranteeing atomicity within that database.
+    </p>
+    <p>
+      After the local transaction, the service publishes an event/message to
+      trigger the next microservice’s transaction.
+    </p>
+    <p>
+      If any step fails, the saga triggers
+      <strong>compensating transactions</strong> to undo prior steps, ensuring
+      eventual consistency.
+    </p>
+    <p>
+      This pattern avoids locking resources across databases and instead relies
+      on asynchronous communication and business-specific rollback logic.
+    </p>
+
+    <h3>Example Flow</h3>
+    <ol>
+      <li>
+        Order Service creates an order (local transaction) → publishes
+        <code>OrderCreated</code> event.
+      </li>
+      <li>
+        Payment Service processes payment → publishes
+        <code>PaymentCompleted</code> or <code>PaymentFailed</code>.
+      </li>
+      <li>
+        Inventory Service reserves items after <code>PaymentCompleted</code>.
+      </li>
+      <li>
+        If payment or inventory reservation fails, compensations rollback
+        previous steps.
+      </li>
+    </ol>
+
+    <h3>Key Points</h3>
+    <ul>
+      <li>Each service guarantees ACID only within its own database.</li>
+      <li>
+        Saga achieves eventual consistency via event-driven coordination and
+        compensations.
+      </li>
+      <li>
+        This is not strong consistency but a trade-off suitable for distributed
+        microservices.
+      </li>
+    </ul>
+
+    <hr />
+
+    <h1>Saga Full Form</h1>
+    <p>
+      <strong>Saga</strong> is not an acronym and has no full form. It is the
+      name of a pattern introduced in a 1987 research paper by Hector
+      Garcia-Molina and Kenneth Salem.
+    </p>
+    <p>
+      It represents a sequence of local transactions with compensating
+      transactions for rollback.
+    </p>
+  </body>
+</html>
